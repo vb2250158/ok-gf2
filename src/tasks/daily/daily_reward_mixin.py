@@ -235,7 +235,7 @@ class DailyRewardMixin:
                 self.click(0.5, 0.95, after_sleep=1)
                 continue
             if any(pack_title.search(title.name) for title in titles):
-                reward = self.config.get("拂晓之光补给包奖励", "数据链路")
+                reward = self.config.get("拂晓之光补给包奖励") or "数据链路"
                 if not reward:
                     self.log_error("未配置拂晓之光补给包奖励，请手动选择")
                     return False
@@ -275,27 +275,33 @@ class DailyRewardMixin:
             box=self.box.top_right,
             after_sleep=6,
             time_out=2,
-            raise_if_not_found=True,
+            raise_if_not_found=False,
             log=True,
         ):
+            self.log_info("探索领取：未找到「边界推进」入口，跳过本任务")
+            self.ensure_main()
             return
         if not self.wait_click_ocr(
             match=re.compile("采集"),
             box=self.box.bottom_right,
             after_sleep=2,
             time_out=2,
-            raise_if_not_found=True,
+            raise_if_not_found=False,
             log=True,
         ):
+            self.log_info("探索领取：未找到「采集」入口，跳过本任务")
+            self.ensure_main()
             return
         if not self.wait_click_ocr(
             match=re.compile("领取"),
             box=self.box.bottom_right,
             time_out=2,
-            raise_if_not_found=True,
+            raise_if_not_found=False,
             after_sleep=2,
             log=True,
         ):
+            self.log_info("探索领取：未找到「领取」入口，跳过本任务")
+            self.ensure_main()
             return
         self.wait_pop_up(count=1)
         if not self.wait_click_ocr(
