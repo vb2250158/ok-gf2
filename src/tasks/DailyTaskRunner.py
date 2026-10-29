@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 
+from ok.task.exceptions import WaitFailedException
+
 TaskItem = tuple[str, Callable[[], object]]
 # 可选的第三元素：开关谓词。提供时替代默认的 config.get(key) 判断（例如多开关 OR 逻辑）。
 TaskItemWithSwitch = tuple[str, Callable[[], object], Callable[[], bool]]
@@ -227,7 +229,12 @@ class DailyTaskRunner:
         self.final_summary["current_task"] = key
         self.task.log_info(self._tr("开始任务: {key}").format(key=self._tr(key)))
         self.task.ensure_main(**self.ensure_main_kwargs)
-        result = func()
+        try:
+            result = func()
+        except WaitFailedException:
+            # 单个任务等待界面超时只记该任务失败，继续后续任务；其他异常仍按原逻辑中断
+            self.task.log_info(self._tr("任务 {key} 等待界面超时").format(key=self._tr(key)))
+            result = False
 
         if result is False:
             self.task_status["failed"].append(key)
